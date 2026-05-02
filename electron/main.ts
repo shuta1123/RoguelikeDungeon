@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, shell } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
@@ -28,7 +28,21 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: true,
+      webSecurity: true,
     },
+  })
+
+  // 外部ナビゲーションをブロック（意図しないURLへの遷移を防ぐ）
+  win.webContents.on('will-navigate', (event, url) => {
+    const allowed = VITE_DEV_SERVER_URL ? url.startsWith(VITE_DEV_SERVER_URL) : false
+    if (!allowed) event.preventDefault()
+  })
+
+  // 新規ウィンドウをブロック、リンクはOSのブラウザで開く
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url)
+    return { action: 'deny' }
   })
 
   if (VITE_DEV_SERVER_URL) {
