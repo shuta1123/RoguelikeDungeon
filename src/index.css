@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-abyss-bg text-abyss-gold font-mono;
+    user-select: none;
+    overflow: hidden;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-abyss-bg;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-abyss-purple rounded;
+  }
+}
+
+@layer components {
+  .abyss-panel {
+    @apply bg-black/60 border border-abyss-purple/40 rounded;
+  }
+
+  .abyss-title {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    text-shadow: 0 0 20px rgba(201, 168, 76, 0.6);
+  }
+}
