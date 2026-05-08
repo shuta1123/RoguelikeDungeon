@@ -13,14 +13,12 @@ export default function LobbyScreen() {
   const [tab, setTab] = useState<'class' | 'upgrade'>('class')
 
   const { meta, loadMeta, buyUpgrade, isLoading: metaLoading } = usePlayerStore()
-  const { startRun, isLoading: dungeonLoading } = useDungeonStore()
+  const { startRun, isLoading: dungeonLoading, error: dungeonError } = useDungeonStore()
   const setScreen = useGameStore((s) => s.setScreen)
 
   useEffect(() => {
     loadMeta()
   }, [loadMeta])
-
-  const isLoading = metaLoading || dungeonLoading
 
   return (
     <div className="flex flex-col h-screen bg-abyss-bg animate-fade-in">
@@ -57,11 +55,14 @@ export default function LobbyScreen() {
                 size="lg"
                 variant="primary"
                 className="w-full mt-4"
-                disabled={isLoading}
+                disabled={dungeonLoading}
                 onClick={() => startRun(selectedClass)}
               >
                 {dungeonLoading ? <LoadingSpinner size="sm" /> : '▶ 冒険を開始する'}
               </Button>
+              {dungeonError && (
+                <p className="text-red-400 text-sm text-center mt-2">{dungeonError}</p>
+              )}
             </div>
           )}
 

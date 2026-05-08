@@ -35,8 +35,11 @@ export const useDungeonStore = create<DungeonStore>((set, get) => ({
       useGameStore.getState().setRunId(res.runId)
       usePlayerStore.getState().setPlayer(res.player)
       useGameStore.getState().setScreen('game')
-    } catch {
-      set({ error: 'ランの開始に失敗しました', isLoading: false })
+    } catch (e) {
+      const msg = e instanceof Error && e.message.includes('WebSocket')
+        ? 'サーバーに接続できません。cd server && go run main.go でサーバーを起動してください。'
+        : 'ランの開始に失敗しました'
+      set({ error: msg, isLoading: false })
     }
   },
 
