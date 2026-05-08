@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { DungeonMap, Direction, MoveEvent } from '../types/dungeon'
 import type { JobClass } from '../types/player'
-import { startRun, move, descend } from '../api/dungeon'
+import { startRun, move, descend, saveRun, resumeRun, checkSave } from '../api/dungeon'
 import { useGameStore } from './gameStore'
 import { usePlayerStore } from './playerStore'
 
@@ -12,9 +12,13 @@ interface DungeonStore {
   actionLog: string[]
   isLoading: boolean
   error: string | null
+  hasSave: boolean
   startRun: (jobClass: JobClass) => Promise<void>
   move: (direction: Direction) => Promise<MoveEvent>
   descend: () => Promise<void>
+  save: () => Promise<void>
+  resume: () => Promise<void>
+  checkSave: () => Promise<void>
   addLog: (msg: string) => void
   reset: () => void
 }
@@ -26,6 +30,7 @@ export const useDungeonStore = create<DungeonStore>((set, get) => ({
   actionLog: [],
   isLoading: false,
   error: null,
+  hasSave: false,
 
   startRun: async (jobClass) => {
     set({ isLoading: true, error: null })
@@ -71,7 +76,41 @@ export const useDungeonStore = create<DungeonStore>((set, get) => ({
     }
   },
 
+  save: async () => {
+    const { runId } = get()
+    if (!runId) return
+    set({ isLoading: true })
+    try {
+      await saveRun(runId)
+      set({ isLoading: false })
+    } catch {
+      set({ isLoading: false })
+    }
+  },
+
+  resume: async () => {
+    set({ isLoading: true, error: null })
+    try {
+      const res = await resumeRun()
+      set({ runId: res.runId, currentMap: res.map, floor: res.map.floor, isLoading: false, actionLog: ['セーブデータを読み込んだ。'] })
+      useGameStore.getState().setRunId(res.runId)
+      usePlayerStore.getState().setPlayer(res.player)
+      useGameStore.getState().setScreen('game')
+    } catch {
+      set({ error: 'セーブデータの読み込みに失敗しました', isLoading: false })
+    }
+  },
+
+  checkSave: async () => {
+    try {
+      const exists = await checkSave()
+      set({ hasSave: exists })
+    } catch {
+      set({ hasSave: false })
+    }
+  },
+
   addLog: (msg) => set((s) => ({ actionLog: [...s.actionLog.slice(-49), msg] })),
 
-  reset: () => set({ runId: null, currentMap: null, floor: 1, actionLog: [], isLoading: false, error: null }),
+  reset: () => set({ runId: null, currentMap: null, floor: 1, actionLog: [], isLoading: false, error: null, hasSave: false }),
 }))

@@ -20,7 +20,7 @@ const KEY_DIR: Record<string, Direction> = {
 }
 
 export default function GameScreen() {
-  const { currentMap, actionLog, isLoading, move, descend, addLog } = useDungeonStore()
+  const { currentMap, actionLog, isLoading, move, descend, save, addLog } = useDungeonStore()
   const player = usePlayerStore((s) => s.player)
   const initBattle = useBattleStore((s) => s.initBattle)
 
@@ -74,7 +74,14 @@ export default function GameScreen() {
       <aside className="w-52 flex flex-col gap-2 p-2 border-r border-abyss-purple/30">
         <PlayerStats player={player} />
         <MiniMap map={currentMap} />
-        <div className="text-xs text-abyss-text-dim text-center mt-auto pb-1">WASD / 矢印キー</div>
+        <button
+          onClick={async () => { await save(); addLog('セーブした。') }}
+          disabled={isLoading}
+          className="mt-auto mb-1 w-full text-xs text-abyss-text-muted hover:text-abyss-gold border border-abyss-purple/30 hover:border-abyss-gold/50 rounded py-1 transition-colors disabled:opacity-40"
+        >
+          💾 セーブ
+        </button>
+        <div className="text-xs text-abyss-text-dim text-center pb-1">WASD / 矢印キー</div>
       </aside>
 
       {/* main map */}

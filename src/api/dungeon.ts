@@ -19,7 +19,32 @@ export async function descend(runId: string): Promise<DescendResponse> {
   return wsClient.request('dungeon/descend', { runId }, 'dungeon/descended')
 }
 
+export async function saveRun(runId: string): Promise<void> {
+  const userId = getUserId()
+  await wsClient.request('dungeon/save', { runId, userId }, 'dungeon/saved')
+}
+
+export async function resumeRun(): Promise<StartRunResponse> {
+  const userId = getUserId()
+  return wsClient.request('dungeon/resume', { userId }, 'dungeon/started')
+}
+
+export async function checkSave(): Promise<boolean> {
+  const userId = getUserId()
+  const res = await wsClient.request<{ exists: boolean }>('dungeon/check-save', { userId }, 'dungeon/save-status')
+  return res.exists
+}
+
 export async function fetchGhosts(floor: number): Promise<GhostResponse> {
   const res = await apiClient.get<GhostResponse>(`/api/ghosts?floor=${floor}`)
   return res.data
+}
+
+function getUserId(): string {
+  let id = localStorage.getItem('userId')
+  if (!id) {
+    id = `guest-${Date.now()}`
+    localStorage.setItem('userId', id)
+  }
+  return id
 }

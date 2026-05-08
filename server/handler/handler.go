@@ -21,6 +21,12 @@ func Handle(c *ws.Client, msg model.InMessage) {
 		handleDungeonDescend(c, msg.Payload)
 	case "battle/action":
 		handleBattleAction(c, msg.Payload)
+	case "dungeon/save":
+		handleDungeonSave(c, msg.Payload)
+	case "dungeon/resume":
+		handleDungeonResume(c, msg.Payload)
+	case "dungeon/check-save":
+		handleCheckSave(c, msg.Payload)
 	default:
 		c.Send("error", model.ErrorPayload{Message: "unknown message type: " + msg.Type})
 	}
@@ -212,6 +218,67 @@ func handleBattleAction(c *ws.Client, raw json.RawMessage) {
 
 	game.Global.Set(run)
 	c.Send("battle/result", battleResponse{BattleState: result.State, Log: result.State.Log})
+}
+
+// --- セーブ ---
+
+type savePayload struct {
+	RunID  string `json:"runId"`
+	UserID string `json:"userId"`
+}
+
+func handleDungeonSave(c *ws.Client, raw json.RawMessage) {
+	var p savePayload
+	if err := json.Unmarshal(raw, &p); err != nil || p.UserID == "" {
+		c.Send("error", model.ErrorPayload{Message: "invalid payload"})
+		return
+	}
+	run, ok := game.Global.Get(p.RunID)
+	if !ok {
+		c.Send("error", model.ErrorPayload{Message: "run not found"})
+		return
+	}
+	if err := game.SaveRun(p.UserID, run); err != nil {
+		c.Send("error", model.ErrorPayload{Message: "save failed"})
+		return
+	}
+	c.Send("dungeon/saved", map[string]string{"message": "セーブしました"})
+}
+
+// --- セーブ確認 ---
+
+type checkSavePayload struct {
+	UserID string `json:"userId"`
+}
+
+func handleCheckSave(c *ws.Client, raw json.RawMessage) {
+	var p checkSavePayload
+	if err := json.Unmarshal(raw, &p); err != nil || p.UserID == "" {
+		c.Send("dungeon/save-status", map[string]bool{"exists": false})
+		return
+	}
+	c.Send("dungeon/save-status", map[string]bool{"exists": game.HasSave(p.UserID)})
+}
+
+// --- ロード ---
+
+type resumePayload struct {
+	UserID string `json:"userId"`
+}
+
+func handleDungeonResume(c *ws.Client, raw json.RawMessage) {
+	var p resumePayload
+	if err := json.Unmarshal(raw, &p); err != nil || p.UserID == "" {
+		c.Send("error", model.ErrorPayload{Message: "invalid payload"})
+		return
+	}
+	run, _, err := game.LoadRun(p.UserID)
+	if err != nil {
+		c.Send("error", model.ErrorPayload{Message: "セーブデータが見つかりません"})
+		return
+	}
+	game.Global.Set(run)
+	c.Send("dungeon/started", startRunResponse{RunID: run.RunID, Map: run.Map, Player: run.Player})
 }
 
 func findMonsterPos(m model.DungeonMap, monsterID string) *model.Position {
