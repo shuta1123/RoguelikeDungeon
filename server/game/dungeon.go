@@ -145,10 +145,18 @@ func trimToRoom(rng *rand.Rand, area rect) rect {
 	if maxH < minRoom {
 		maxH = minRoom
 	}
-	w := minRoom + rng.Intn(maxW-minRoom+1)
-	h := minRoom + rng.Intn(maxH-minRoom+1)
-	x := area.x + rng.Intn(area.w-w)
-	y := area.y + rng.Intn(area.h-h)
+	w := minRoom + rng.Intn(max(1, maxW-minRoom+1))
+	h := minRoom + rng.Intn(max(1, maxH-minRoom+1))
+	xRoom := area.w - w
+	yRoom := area.h - h
+	x := area.x
+	y := area.y
+	if xRoom > 0 {
+		x += rng.Intn(xRoom)
+	}
+	if yRoom > 0 {
+		y += rng.Intn(yRoom)
+	}
 	return rect{x, y, w, h}
 }
 
