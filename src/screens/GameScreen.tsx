@@ -10,6 +10,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner'
 import { useDungeonStore } from '../stores/dungeonStore'
 import { usePlayerStore } from '../stores/playerStore'
 import { useBattleStore } from '../stores/battleStore'
+import { useGameStore } from '../stores/gameStore'
 import type { Monster } from '../types/monster'
 
 const KEY_DIR: Record<string, Direction> = {
@@ -20,12 +21,14 @@ const KEY_DIR: Record<string, Direction> = {
 }
 
 export default function GameScreen() {
-  const { currentMap, actionLog, isLoading, move, descend, save, addLog } = useDungeonStore()
+  const { currentMap, actionLog, isLoading, move, descend, save, reset, addLog } = useDungeonStore()
+  const setScreen = useGameStore((s) => s.setScreen)
   const player = usePlayerStore((s) => s.player)
   const initBattle = useBattleStore((s) => s.initBattle)
 
   const [stairsModal, setStairsModal] = useState(false)
   const [itemMsg, setItemMsg] = useState<string | null>(null)
+  const [quitModal, setQuitModal] = useState(false)
 
   const handleMove = useCallback(async (dir: Direction) => {
     if (isLoading) return
@@ -74,14 +77,22 @@ export default function GameScreen() {
       <aside className="w-52 flex flex-col gap-2 p-2 border-r border-abyss-purple/30">
         <PlayerStats player={player} />
         <MiniMap map={currentMap} />
-        <button
-          onClick={async () => { await save(); addLog('セーブした。') }}
-          disabled={isLoading}
-          className="mt-auto mb-1 w-full text-xs text-abyss-text-muted hover:text-abyss-gold border border-abyss-purple/30 hover:border-abyss-gold/50 rounded py-1 transition-colors disabled:opacity-40"
-        >
-          💾 セーブ
-        </button>
-        <div className="text-xs text-abyss-text-dim text-center pb-1">WASD / 矢印キー</div>
+        <div className="mt-auto flex flex-col gap-1">
+          <button
+            onClick={async () => { await save(); addLog('セーブした。') }}
+            disabled={isLoading}
+            className="w-full text-xs text-abyss-text-muted hover:text-abyss-gold border border-abyss-purple/30 hover:border-abyss-gold/50 rounded py-1 transition-colors disabled:opacity-40"
+          >
+            💾 セーブ
+          </button>
+          <button
+            onClick={() => setQuitModal(true)}
+            className="w-full text-xs text-abyss-text-muted hover:text-red-400 border border-abyss-purple/30 hover:border-red-400/50 rounded py-1 transition-colors"
+          >
+            ✕ やめる
+          </button>
+          <div className="text-xs text-abyss-text-dim text-center">WASD / 矢印キー</div>
+        </div>
       </aside>
 
       {/* main map */}
@@ -103,6 +114,15 @@ export default function GameScreen() {
       <aside className="w-52 p-2 border-l border-abyss-purple/30">
         <ActionLog logs={actionLog} />
       </aside>
+
+      {/* quit modal */}
+      <Modal isOpen={quitModal} title="やめる" onClose={() => setQuitModal(false)}>
+        <p className="text-abyss-text-muted text-sm mb-4">タイトルに戻りますか？<br />セーブしていない進行は失われます。</p>
+        <div className="flex gap-2 justify-end">
+          <Button variant="secondary" onClick={() => setQuitModal(false)}>戻る</Button>
+          <Button variant="primary" onClick={() => { reset(); setScreen('title') }}>やめる</Button>
+        </div>
+      </Modal>
 
       {/* stairs modal */}
       <Modal isOpen={stairsModal} title="階段" onClose={() => setStairsModal(false)}>
