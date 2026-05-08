@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { BattleState, BattleAction } from '../types/battle'
 import type { Monster } from '../types/monster'
-import { sendBattleAction, resetBattleMock } from '../api/battle'
+import { sendBattleAction } from '../api/battle'
 import { useGameStore } from './gameStore'
 import { usePlayerStore } from './playerStore'
 import { useDungeonStore } from './dungeonStore'
@@ -15,23 +15,24 @@ interface BattleStore {
   reset: () => void
 }
 
-import { mockInitialBattleState } from '../mocks/mockBattle'
-
 export const useBattleStore = create<BattleStore>((set, get) => ({
   battleState: null,
   isLoading: false,
   error: null,
 
   initBattle: (monster) => {
-    resetBattleMock()
     const player = usePlayerStore.getState().player
     set({
       battleState: {
-        ...mockInitialBattleState,
+        isActive: true,
+        turn: 1,
+        phase: 'player_turn',
         monster,
-        playerHp: player?.hp ?? mockInitialBattleState.playerHp,
-        playerMp: player?.mp ?? mockInitialBattleState.playerMp,
+        playerHp: player?.hp ?? 80,
+        playerMp: player?.mp ?? 20,
         log: [{ id: 'log-init', message: `${monster.name} が現れた！`, type: 'system' }],
+        availableActions: ['attack', 'skill', 'item', 'escape'],
+        synergyActive: null,
       },
       isLoading: false,
       error: null,
@@ -67,8 +68,5 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
     }
   },
 
-  reset: () => {
-    resetBattleMock()
-    set({ battleState: null, isLoading: false, error: null })
-  },
+  reset: () => set({ battleState: null, isLoading: false, error: null }),
 }))

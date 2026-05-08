@@ -1,15 +1,12 @@
 import type { AuthResponse } from '../types/api'
+import { apiClient } from './client'
 
-// TODO: [API] POST /api/auth/register — ここを実際のAPIに置き換える
-// 現在は静的モックデータを使用
-export async function register(_username: string, _password: string): Promise<AuthResponse> {
-  await new Promise((r) => setTimeout(r, 300))
-  return { token: 'mock-token-001', user: { id: 'user-001', username: _username } }
+export async function register(username: string, password: string): Promise<AuthResponse> {
+  const res = await apiClient.post<AuthResponse>('/api/auth/register', { username, password })
+  return res.data
 }
 
-// TODO: [API] POST /api/auth/login — ここを実際のAPIに置き換える
-// 現在は静的モックデータを使用
-export async function login(_username: string, _password: string): Promise<AuthResponse> {
-  await new Promise((r) => setTimeout(r, 300))
-  return { token: 'mock-token-001', user: { id: 'user-001', username: _username } }
+export async function login(username: string, password: string): Promise<AuthResponse> {
+  const res = await apiClient.post<AuthResponse>('/api/auth/login', { username, password })
+  return res.data
 }

@@ -1,8 +1,13 @@
+import { useEffect } from 'react'
 import Button from '../components/common/Button'
 import { useGameStore } from '../stores/gameStore'
+import { useDungeonStore } from '../stores/dungeonStore'
 
 export default function TitleScreen() {
   const setScreen = useGameStore((s) => s.setScreen)
+  const { hasSave, resume, checkSave, isLoading, error } = useDungeonStore()
+
+  useEffect(() => { checkSave() }, [checkSave])
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-abyss-bg relative overflow-hidden animate-fade-in">
@@ -25,9 +30,15 @@ export default function TitleScreen() {
           <Button size="lg" variant="primary" className="w-48" onClick={() => setScreen('lobby')}>
             ▶ 冒険を始める
           </Button>
+          {hasSave && (
+            <Button size="lg" variant="secondary" className="w-48" disabled={isLoading} onClick={resume}>
+              {isLoading ? '読み込み中…' : '↩ 続きから'}
+            </Button>
+          )}
           <Button size="md" variant="secondary" className="w-48" onClick={() => setScreen('ranking')}>
             ◈ ランキング
           </Button>
+          {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
         </div>
 
         <p className="text-abyss-text-dim text-xs mt-8">WASD / 矢印キー で移動</p>
